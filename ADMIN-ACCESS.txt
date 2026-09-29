@@ -1,0 +1,8 @@
+CHOOSE ME — LOCAL ADMIN ACCESS
+
+Admin: http://localhost:3000/admin
+Email: admin@chooseme.local
+Password: e5JKWNvnHnfB3XrvcfII9drc
+
+Keep this file private. You can change your password in Admin → Account.
+This file is excluded from source control. Delete it after saving your password securely.

@@ -1,0 +1,14 @@
+services:
+  choose-me:
+    build: .
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@chooseme.local}
+    volumes:
+      - studio-data:/app/data
+    restart: unless-stopped
+volumes:
+  studio-data:

@@ -1,0 +1,10 @@
+import { backup, DatabaseSync } from 'node:sqlite';
+import { resolve, join } from 'node:path';
+import { mkdirSync, cpSync, existsSync } from 'node:fs';
+const source=resolve(process.env.DATA_DIR || 'data');
+const destination=resolve('backups',new Date().toISOString().replace(/[:.]/g,'-'));
+mkdirSync(destination,{recursive:true,mode:0o700});
+const db=new DatabaseSync(join(source,'chooseme.sqlite'),{readOnly:true});
+await backup(db,join(destination,'chooseme.sqlite'));db.close();
+if(existsSync(join(source,'uploads'))) cpSync(join(source,'uploads'),join(destination,'uploads'),{recursive:true});
+console.log(`Database and uploaded photos backed up to ${destination}`);
