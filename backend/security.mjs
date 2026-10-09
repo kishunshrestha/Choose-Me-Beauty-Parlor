@@ -12,11 +12,15 @@ export async function checkPassword(password, stored) {
   const [salt, hash] = stored.split(':');
   const key = await scrypt(password, salt, 64);
   const expected = Buffer.from(hash, 'hex');
-  return expected.length === key.length && timingSafeEqual(key, expected);
+  return expected.length === key.length && timingSafeEqual(expected, key);
 }
 export async function bootstrapAdmin(db, accessFile, email = 'admin@chooseme.local', reset = false) {
   if (!reset && db.prepare('SELECT id FROM admin WHERE id=1').get()) return;
-  const password = randomBytes(18).toString('base64url');
+  const configuredPassword = process.env.ADMIN_INITIAL_PASSWORD;
+  if (configuredPassword && configuredPassword.length < 12) {
+    throw new Error('ADMIN_INITIAL_PASSWORD must be at least 12 characters.');
+  }
+  const password = configuredPassword || randomBytes(18).toString('base64url');
   db.prepare('INSERT INTO admin VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET email=excluded.email, password_hash=excluded.password_hash').run(email, await hashPassword(password));
   db.prepare('DELETE FROM sessions').run();
   writeFileSync(accessFile, `CHOOSE ME — LOCAL ADMIN ACCESS\n\nAdmin: http://localhost:${process.env.PORT || 3000}/admin\nEmail: ${email}\nPassword: ${password}\n\nKeep this file private. You can change your password in Admin → Account.\nThis file is excluded from source control. Delete it after saving your password securely.\n`, {mode: 0o600});
