@@ -1,0 +1,15 @@
+# Local secrets and generated admin credentials
+ADMIN-ACCESS.txt
+.env
+.env.*
+!.env.example
+
+# Local runtime database and uploads
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+data/uploads/
+
+# Dependencies and local build/cache output
+node_modules/
+.vite/
