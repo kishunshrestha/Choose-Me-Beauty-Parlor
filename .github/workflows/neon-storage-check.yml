@@ -14,6 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm install --no-audit --no-fund
-      - run: npm test
-      - run: npm run build
+      - run: corepack enable && corepack prepare pnpm@11.25.0 --activate
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
