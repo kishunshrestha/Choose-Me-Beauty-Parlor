@@ -13,7 +13,7 @@ await bootstrapAdmin(db,resolve('ADMIN-ACCESS.txt'),process.env.ADMIN_EMAIL);
 const app=createApp(db,{dev,dataDir});
 app.get('/robots.txt',(_req,res)=>res.type('text/plain').send('User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n'));
 app.get('/sitemap.xml',(_req,res)=>{
-  const origin=process.env.APP_ORIGIN || `http://localhost:${port}`;
+  const origin=process.env.APP_ORIGIN || process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`;
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${escapeHtml(origin)}</loc></url></urlset>`);
 });
 function escapeHtml(value) {return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
