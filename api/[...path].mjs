@@ -18,17 +18,15 @@ const app = createApp(db, {
   dataDir: '/tmp/chooseme',
 });
 
-// Filesystem catch-all functions may receive the suffix without "/api".
-// Normalize it to the paths used by the existing Express app. Uploaded media
-// URLs are public "/uploads/..." URLs, rewritten to "/api/uploads/..." below.
-app.use((req, _res, next) => {
+// Vercel catch-all functions can receive a path with or without the "/api"
+// prefix. Normalize before Express matches routes. Public upload URLs are
+// rewritten to /api/uploads/... and mapped back to /uploads/... here.
+export default function handler(req, res) {
   const url = req.url || '/';
   if (url.startsWith('/api/uploads/')) {
     req.url = url.slice(4);
   } else if (url !== '/api' && !url.startsWith('/api/')) {
     req.url = `/api${url.startsWith('/') ? '' : '/'}${url}`;
   }
-  next();
-});
-
-export default app;
+  return app(req, res);
+}
