@@ -12,7 +12,7 @@ import { schemas, settingsSchema, enquirySchema } from './validation.mjs';
 
 export function createApp(db, options = {}) {
   const app = express();
-  const origin = options.origin || process.env.APP_ORIGIN || `http://localhost:${process.env.PORT || 3000}`;
+  const origin = options.origin || process.env.APP_ORIGIN || process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`;
   const secure = options.secure ?? process.env.COOKIE_SECURE === 'true';
   const uploadDir = resolve(options.dataDir || process.env.DATA_DIR || './data', 'uploads');
   mkdirSync(uploadDir, {recursive: true});
