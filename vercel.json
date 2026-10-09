@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api/index.mjs?__route=$1"
+    },
+    {
       "source": "/uploads/(.*)",
-      "destination": "/api/uploads/$1"
+      "destination": "/api/index.mjs?__route=uploads/$1"
     },
     {
       "source": "/admin",
