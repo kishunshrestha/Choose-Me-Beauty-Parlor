@@ -15,8 +15,10 @@ export async function checkPassword(password, stored) {
   return expected.length === key.length && timingSafeEqual(expected, key);
 }
 export async function bootstrapAdmin(db, accessFile, email = 'admin@chooseme.local', reset = false) {
-  if (!reset && db.prepare('SELECT id FROM admin WHERE id=1').get()) return;
-  const configuredPassword = process.env.ADMIN_INITIAL_PASSWORD;
+  const existing = db.prepare('SELECT id FROM admin WHERE id=1').get();
+  if (!reset && existing) return;
+  // Only use the deployment secret for first-time bootstrap. Explicit resets always rotate to a new random password.
+  const configuredPassword = !existing && !reset ? process.env.ADMIN_INITIAL_PASSWORD : undefined;
   if (configuredPassword && configuredPassword.length < 12) {
     throw new Error('ADMIN_INITIAL_PASSWORD must be at least 12 characters.');
   }
