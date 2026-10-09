@@ -110,13 +110,20 @@ Deleting content removes the database record. Uploaded files are retained so del
 
 ## Hosting
 
-Deploy to a **single Node.js 24+ server with a persistent disk**. Store `data/` outside ephemeral build directories. This SQLite version is not designed for stateless serverless functions or multiple replicas sharing a network-mounted database.
+### Render (persistent production server)
 
-Set `HOST=0.0.0.0`, `APP_ORIGIN=https://your-domain.example`, and `COOKIE_SECURE=true` behind an HTTPS reverse proxy. Never serve the project root as static files; Express serves only the built frontend and public image uploads. Keep the database, access file and backups private.
+This app uses SQLite and stores uploaded WebP images on disk. Deploy it as **one Docker web service with a persistent disk**; do not run multiple replicas or deploy this SQLite version as stateless serverless functions.
 
-The included Dockerfile and compose file mount a persistent volume. To expose beyond your machine, configure your HTTPS reverse proxy and update the public origin. The default Compose configuration binds only to localhost.
+1. Merge the deployment pull request, then create a **Blueprint** in Render from this repository and its `render.yaml` file.
+2. During setup, provide `ADMIN_EMAIL` and a unique `ADMIN_INITIAL_PASSWORD` of at least 12 characters. Use a password manager. Never put either value in Git.
+3. The blueprint selects a paid Starter web service in Singapore and mounts a 1 GB persistent disk at `/app/data`. That disk stores the SQLite database and uploaded photos across deploys/restarts. Check current Render pricing before creating the service; do not choose a free plan for this SQLite deployment.
+4. Wait for the `/api/health` check to pass. The service serves the website and its API from the same origin. Render's `RENDER_EXTERNAL_URL` is used automatically for same-origin protection and sitemap generation unless `APP_ORIGIN` is explicitly set.
+5. Keep the admin password private. The initial password is used only when the database has no admin account; password resets generate a new random password. Change the password after signing in and save it in a password manager.
+6. Set up scheduled off-site backups for both the database and `data/uploads/`. A persistent disk protects against routine restarts/deploys, but it is not a backup.
 
-No proxy IP headers are trusted by default. Behind a reverse proxy, rate limits are shared by users arriving through that proxy unless you configure a verified trusted proxy boundary in Express. Do not blindly trust client-supplied IP headers.
+If you later proxy the Vercel domain to Render, set `APP_ORIGIN` on Render to the exact public Vercel origin and proxy both `/api/*` and `/uploads/*` to the Render service. Verify admin login, CSRF-protected changes, photo uploads and enquiry submission after configuring the proxy.
+
+Never serve the project root as static files; Express serves only the built frontend and public image uploads. Keep the database, access file and backups private. No proxy IP headers are trusted by default. Do not blindly trust client-supplied IP headers.
 
 ## Verification
 

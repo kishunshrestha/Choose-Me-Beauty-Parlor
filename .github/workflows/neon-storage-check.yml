@@ -1,0 +1,20 @@
+name: Neon storage migration checks
+on:
+  push:
+    branches:
+      - feature/neon-persistent-storage
+  pull_request:
+    branches:
+      - deploy/render-persistent-backend
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable && corepack prepare pnpm@11.25.0 --activate
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build

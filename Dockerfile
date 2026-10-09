@@ -2,8 +2,10 @@ FROM node:24-bookworm-slim
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 COPY . .
+# Do not ship the development SQLite database or its credentials into production.
+RUN rm -f /app/data/chooseme.sqlite /app/data/chooseme.sqlite-shm /app/data/chooseme.sqlite-wal
 RUN pnpm build && mkdir -p /app/data && chown -R node:node /app
 USER node
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 DATA_DIR=/app/data
