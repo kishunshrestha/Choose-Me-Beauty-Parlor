@@ -16,15 +16,34 @@ export async function checkPassword(password, stored) {
 }
 export async function bootstrapAdmin(db, accessFile, email = 'admin@chooseme.local', reset = false) {
   const existing = db.prepare('SELECT id FROM admin WHERE id=1').get();
-  if (!reset && existing) return;
-  // Only use the deployment secret for first-time bootstrap. Explicit resets always rotate to a new random password.
-  const configuredPassword = !existing && !reset ? process.env.ADMIN_INITIAL_PASSWORD : undefined;
-  if (configuredPassword && configuredPassword.length < 12) {
+  const configuredPassword = process.env.ADMIN_INITIAL_PASSWORD;
+
+  // Apply the configured deployment password once to an existing database when the
+  // deployment secret is first introduced. The marker prevents overwriting later
+  // password changes on every restart.
+  if (!reset && existing) {
+    const applied = db.prepare("SELECT value FROM app_meta WHERE key='admin_initial_password_applied'").get();
+    if (!configuredPassword || applied) return;
+    if (configuredPassword.length < 12) {
+      throw new Error('ADMIN_INITIAL_PASSWORD must be at least 12 characters.');
+    }
+    db.prepare('UPDATE admin SET email=?, password_hash=? WHERE id=1').run(email, await hashPassword(configuredPassword));
+    db.prepare('DELETE FROM sessions').run();
+    db.prepare("INSERT INTO app_meta (key,value) VALUES ('admin_initial_password_applied','1') ON CONFLICT(key) DO UPDATE SET value='1'").run();
+    writeFileSync(accessFile, `CHOOSE ME — LOCAL ADMIN ACCESS\n\nAdmin: http://localhost:${process.env.PORT || 3000}/admin\nEmail: ${email}\nPassword: ${configuredPassword}\n\nKeep this file private. You can change your password in Admin → Account.\nThis file is excluded from source control. Delete it after saving your password securely.\n`, {mode: 0o600});
+    return;
+  }
+
+  // Explicit resets rotate to a random password; initial bootstrap uses the deployment secret.
+  const password = !reset && configuredPassword ? configuredPassword : randomBytes(18).toString('base64url');
+  if (!reset && configuredPassword && configuredPassword.length < 12) {
     throw new Error('ADMIN_INITIAL_PASSWORD must be at least 12 characters.');
   }
-  const password = configuredPassword || randomBytes(18).toString('base64url');
   db.prepare('INSERT INTO admin VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET email=excluded.email, password_hash=excluded.password_hash').run(email, await hashPassword(password));
   db.prepare('DELETE FROM sessions').run();
+  if (!reset && configuredPassword) {
+    db.prepare("INSERT INTO app_meta (key,value) VALUES ('admin_initial_password_applied','1') ON CONFLICT(key) DO UPDATE SET value='1'").run();
+  }
   writeFileSync(accessFile, `CHOOSE ME — LOCAL ADMIN ACCESS\n\nAdmin: http://localhost:${process.env.PORT || 3000}/admin\nEmail: ${email}\nPassword: ${password}\n\nKeep this file private. You can change your password in Admin → Account.\nThis file is excluded from source control. Delete it after saving your password securely.\n`, {mode: 0o600});
 }
 export function rateLimit(db, scope, max, windowMs) {
