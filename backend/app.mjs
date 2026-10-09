@@ -33,7 +33,8 @@ export function createApp(db, options = {}) {
     if(!['GET','HEAD','OPTIONS'].includes(req.method)){
       if(req.headers.origin&&req.headers.origin!==origin)return res.status(403).json({error:'This request is not allowed.'});
       const contentType=req.get('content-type')||'';
-      if(!/^application\/json(?:\s*;|$)/i.test(contentType)&&!/^multipart\/form-data(?:\s*;|$)/i.test(contentType))return res.status(415).json({error:'Send JSON or a photo upload.'});
+      const hasBody=Number(req.get('content-length')||0)>0||Boolean(req.get('transfer-encoding'));
+      if(hasBody&&!/^application\/json(?:\s*;|$)/i.test(contentType)&&!/^multipart\/form-data(?:\s*;|$)/i.test(contentType))return res.status(415).json({error:'Send JSON or a photo upload.'});
     }
     next();
   });
