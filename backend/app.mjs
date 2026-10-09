@@ -32,7 +32,8 @@ export function createApp(db, options = {}) {
     res.set('Cache-Control','no-store');
     if(!['GET','HEAD','OPTIONS'].includes(req.method)){
       if(req.headers.origin&&req.headers.origin!==origin)return res.status(403).json({error:'This request is not allowed.'});
-      if(!req.is('application/json')&&!req.is('multipart/form-data'))return res.status(415).json({error:'Send JSON or a photo upload.'});
+      const contentType=req.get('content-type')||'';
+      if(!/^application\/json(?:\s*;|$)/i.test(contentType)&&!/^multipart\/form-data(?:\s*;|$)/i.test(contentType))return res.status(415).json({error:'Send JSON or a photo upload.'});
     }
     next();
   });
